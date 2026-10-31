@@ -13,7 +13,7 @@ Deploy your own instance using the instructions below!
 
 ### Demo Video
 
-<a href="https://drive.google.com/file/d/1Suioy4nQ8zz2N4Geg-RvPmPybRsHCGZV/view?usp=share_link" target="_blank"> Sensei4Stocks </a>
+<a href="https://drive.google.com/file/d/1Ps0beFcaZu-vaujHhgy7HTDY0wkZA-od/view?usp=sharing" target="_blank"> Sensei4Stocks </a>
 
 ### Screenshot
 
