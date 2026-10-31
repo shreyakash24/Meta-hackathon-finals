@@ -21,8 +21,6 @@ from voice_generator import (
     transcribe_audio
 )
 from streamlit_autorefresh import st_autorefresh
-
-# Load environment variables
 load_dotenv()
 
 # Content length thresholds for filtering agent messages
@@ -33,7 +31,6 @@ MIN_STREAMING_CONTENT_LENGTH = 50
 # Longer threshold (100) used for final output to ensure only substantial analysis is shown
 MIN_FINAL_CONTENT_LENGTH = 100
 
-# Page configuration
 st.set_page_config(
     page_title="Sensei4Stocks | AI Stock Recommender",
     page_icon="📈",
@@ -41,7 +38,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional styling
 st.markdown("""
 <style>
 /* -------------------- GLOBAL -------------------- */
@@ -646,7 +642,7 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
         status_text.text("🚀 Running analysis...")
         
         agent_outputs = {}
-        agent_all_content = {}  # Accumulate all content for each agent
+        agent_all_content = {} 
         current_chunk = None
         
         for chunk in supervisor.stream(
@@ -661,7 +657,6 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
         ):
             current_chunk = chunk
             
-            # Process updates
             if isinstance(chunk, tuple):
                 ns, chunk_data = chunk
                 if len(ns) == 0:
@@ -677,57 +672,43 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
                     
                     messages = convert_to_messages(node_update.get("messages", []))
                     if messages:
-                        # Accumulate all messages from this agent
                         for msg in messages:
                             content = parse_message_content(msg)
-                            # Filter out empty content and tool call messages
                             if content and isinstance(content, str) and content.strip():
-                                # Skip messages that are just tool calls or very short
                                 if len(content.strip()) > MIN_STREAMING_CONTENT_LENGTH:
                                     if node_name not in agent_all_content:
                                         agent_all_content[node_name] = []
                                     agent_all_content[node_name].append(content)
-                        
-                        # Keep the latest substantial content for display
+ 
                         if node_name in agent_all_content and agent_all_content[node_name]:
                             agent_outputs[node_name] = agent_all_content[node_name][-1]
         
-        # Final processing
         status_text.text("✅ Analysis complete!")
         
         final_message_history = []
         if current_chunk and "supervisor" in current_chunk:
             final_message_history = current_chunk["supervisor"].get("messages", [])
-        
-        # Extract agent messages for display - prioritize complete final messages
+
         agent_messages = []
         supervisor_final_message = None
         for msg in final_message_history:
             agent_name = get_agent_name(msg)
             content = parse_message_content(msg)
-            
-            # Check if content is substantial (not just empty or tool calls)
+
             if agent_name and content and isinstance(content, str) and content.strip():
-                # Skip very short messages (likely tool calls or handoffs)
                 if len(content.strip()) > MIN_FINAL_CONTENT_LENGTH and agent_name in AGENT_VOICES:
                     agent_messages.append((agent_name, content))
-                    # Override with final message history as it contains complete analysis
                     agent_outputs[agent_name] = content
-                    # Track the supervisor's final message for voice output
                     if agent_name == "supervisor":
                         supervisor_final_message = content
-        
-        # Store results in session state for voice output button to use
-        # Store all agent messages for multi-agent voice output
+
         st.session_state.agent_outputs = agent_outputs
         st.session_state.agent_messages = agent_messages
         st.session_state.analysis_complete = True
         
-        # Display results
         with result_container:
             st.markdown("### 📋 Analysis Results")
             
-            # Create tabs for each agent's output
             if agent_outputs:
                 tabs = st.tabs([f"{agent_icons.get(name, '🤖')} {format_agent_name(name)}" 
                                for name in agent_outputs.keys()])
@@ -747,7 +728,6 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
 def main():
     import time
     
-    # Header
     st.markdown("""
     <div class="header-container">
         <h1 class="header-title">📈 Sensei4Stocks</h1>
@@ -755,10 +735,8 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar
     with st.sidebar:
         
-        # About section
         st.markdown("### 📖 About")
         st.markdown("""
         **Sensei4Stocks** uses a team of AI agents to analyze Indian NSE stocks:
@@ -774,7 +752,6 @@ def main():
         
         st.markdown("---")
         
-        # Disclaimer
         st.markdown("### ⚠️ Disclaimer")
         st.markdown("""
         <small>This tool is for educational purposes only. 
@@ -782,27 +759,22 @@ def main():
         Past performance does not guarantee future results.</small>
         """, unsafe_allow_html=True)
     
-    # Main content
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.markdown("### 🎯 Start Your Analysis")
-        
-        # Initialize session state for query
+
         if 'query_text' not in st.session_state:
             st.session_state.query_text = "Find 2 promising NSE stocks and provide detailed analysis with buy/sell recommendations"
-        
-        # Initialize session state for audio processing tracking
+       
         if 'last_audio_processed' not in st.session_state:
             st.session_state.last_audio_processed = None
         if 'transcription_in_progress' not in st.session_state:
             st.session_state.transcription_in_progress = False
-        
-        # Initialize session state for auto-triggering analysis after voice input
+
         if 'auto_run_analysis' not in st.session_state:
             st.session_state.auto_run_analysis = False
         
-        # Speech-to-Text Section
         st.markdown("#### 🎤 Voice Input")
         
         st.markdown("""
@@ -811,30 +783,24 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Voice input via microphone recording
         audio_bytes = None
         recorder_available = False
         
-        # Try audio-recorder-streamlit first (more reliable)
         try:
             from audio_recorder_streamlit import audio_recorder
             st.markdown('<div class="voice-section style="background-color:#0A1F44; padding:1rem; border-radius:12px;">', unsafe_allow_html=True)
-            # Audio recorder component - simple microphone icon
             audio_bytes = audio_recorder(
                 text="Click to record",
                 recording_color="#e53935",
                 neutral_color="#10B981",
                 icon_size="2x",
-                pause_threshold=2.0,  # Auto-stop after 2 seconds of silence
+                pause_threshold=2.0,  
             )
             recorder_available = True
             st.markdown('</div>', unsafe_allow_html=True)
         except ImportError:
-            # Fallback to st_audiorec if audio-recorder-streamlit is not available
             try:
                 from st_audiorec import st_audiorec
-                
-                # Audio recorder component
                 audio_bytes = st_audiorec()
                 recorder_available = True
                 
@@ -845,42 +811,31 @@ def main():
             st.warning("⚠️ Audio recording not available. Please type your query below.")
         else:
             st.info("💡 **Note:** Microphone access is required. Please allow permissions when prompted by your browser.")
-        
-        # Process recorded audio - transcribe and use as query
-        # Only process audio once to prevent continuous transcription on page reruns
+
         if audio_bytes is not None and len(audio_bytes) > 0:
-            # Create a hash of the audio to detect if it's new audio
             audio_hash = hashlib.md5(audio_bytes).hexdigest()
             
-            # Only process if this is new audio (different from last processed)
             if audio_hash != st.session_state.last_audio_processed:
                 st.audio(audio_bytes, format="audio/wav")
                 
-                # Transcribe the audio and update query text
                 with st.spinner("🎙️ Transcribing your voice input..."):
                     st.session_state.transcription_in_progress = True
                     transcribed_text, error = transcribe_audio(audio_bytes)
                     st.session_state.transcription_in_progress = False
                     
-                    # Mark this audio as processed
                     st.session_state.last_audio_processed = audio_hash
                     
                     if transcribed_text:
                         st.success(f"✅ Transcribed: \"{transcribed_text}\"")
-                        # Update the query text with transcribed voice input
                         st.session_state.query_text = transcribed_text
-                        # Set flag to automatically run analysis after transcription
                         st.session_state.auto_run_analysis = True
-                        # Show a brief message before triggering analysis
                         with st.spinner("🚀 Starting automatic stock analysis..."):
                             import time
-                            time.sleep(1)  # Brief delay so user can see the message
-                        # Trigger a rerun to start the analysis
+                            time.sleep(1) 
                         st.rerun()
                     elif error:
                         st.warning(f"⚠️ Could not transcribe audio: {error}")
             else:
-                # Audio already processed, just show it without re-transcribing
                 st.audio(audio_bytes, format="audio/wav")
                 col_info, col_btn = st.columns([3, 1])
                 with col_info:
@@ -890,7 +845,6 @@ def main():
                         st.session_state.last_audio_processed = None
                         st.rerun()
             
-        # Provide troubleshooting guidance
         with st.expander("🔧 Troubleshooting: Voice input not working?"):
             st.markdown("""
             **If recording doesn't work:**
@@ -906,7 +860,6 @@ def main():
         
         st.markdown("---")
         
-        # Query input (text)
         st.markdown("#### ⌨️ Text Input")
         
         query = st.text_area(
@@ -917,7 +870,6 @@ def main():
             key="query_input"
         )
         
-        # Update session state when text changes
         if query != st.session_state.query_text:
             st.session_state.query_text = query
     
@@ -943,23 +895,17 @@ def main():
     
     st.markdown("---")
     
-    # Run analysis button or auto-run after voice input
     run_analysis = st.button("🔍 Run Stock Analysis", type="primary", use_container_width=True)
     
-    # Check if we should auto-run analysis after voice input
     if st.session_state.get('auto_run_analysis', False):
         run_analysis = True
-        st.session_state.auto_run_analysis = False  # Reset the flag
+        st.session_state.auto_run_analysis = False  
     
     if run_analysis:
         
-        # Reset voice playback state for new analysis
         reset_voice_state()
-        
-        # Use the query from session state
         analysis_query = st.session_state.query_text
         
-        # Check for required API keys
         if not os.getenv("GROQ_API_KEY"):
             st.error("❌ GROQ_API_KEY is required. Please set it in your environment variables.")
             return
@@ -968,14 +914,12 @@ def main():
             st.error("❌ BRIGHT_DATA_API_TOKEN is required. Please set it in your environment variables.")
             return
         
-        # Create containers for progress and results
         progress_container = st.container()
         status_text = st.empty()
         result_container = st.container()
         
         with progress_container:
             with st.spinner(""):
-                # Run the async analysis
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
@@ -984,12 +928,10 @@ def main():
                     )
                 finally:
                     loop.close()
-    
-    # Voice Output Section with Agent Circles - always visible
+
     st.markdown("---")
     st.markdown("### 🔊 Voice Output & Agent Visualization")
     
-    # Initialize voice playback state
     if 'voice_playing' not in st.session_state:
         st.session_state.voice_playing = False
     if 'current_playing_agent' not in st.session_state:
@@ -1001,36 +943,31 @@ def main():
     if 'agents_to_play' not in st.session_state:
         st.session_state.agents_to_play = []
     
-    # Display agent circles - always visible with current_playing_agent highlighted
     active_agent = st.session_state.current_playing_agent
     st.markdown(render_agent_circles(active_agent), unsafe_allow_html=True)
     
-    # Voice output controls
     analysis_complete = st.session_state.get('analysis_complete', False)
     agent_messages = st.session_state.get('agent_messages', [])
     
     if not analysis_complete:
         st.info("🎯 Run a stock analysis to enable voice output. The agent circles above will highlight as each agent speaks.")
     else:
-        # Automatically start voice playback after analysis is complete
+    
         if not st.session_state.voice_playing and not st.session_state.get('voice_playback_complete', False):
             st.session_state.voice_playing = True
             st.session_state.playback_index = 0
-            
-            # Generate individual agent audio files for all agents
+    
             if agent_messages:
                 with st.spinner("Generating voice for each agent..."):
                     audio_files, error = generate_individual_agent_audio(agent_messages, ".")
                     if audio_files:
                         st.session_state.agent_audio_files = audio_files
                         st.session_state.agents_to_play = list(audio_files.keys())
-                        # Store audio durations estimated from file size
-                        # For 24kHz 16-bit mono WAV: ~48000 bytes per second (24000 samples * 2 bytes)
                         st.session_state.audio_durations = {}
                         for agent_name, file_path in audio_files.items():
                             if os.path.exists(file_path):
                                 file_size = os.path.getsize(file_path)
-                                estimated_duration = max(5, file_size / 48000)  # At least 5 seconds
+                                estimated_duration = max(5, file_size / 48000)  
                                 st.session_state.audio_durations[agent_name] = estimated_duration
                     elif error:
                         st.error(f"❌ {error}")
@@ -1038,8 +975,7 @@ def main():
             else:
                 st.warning("No agent messages available for voice output.")
                 st.session_state.voice_playing = False
-    
-    # Sequential voice playback with agent highlighting - automatic progression
+
     if st.session_state.voice_playing and st.session_state.agent_audio_files:
         agents_to_play = st.session_state.agents_to_play
         playback_index = st.session_state.playback_index
@@ -1048,10 +984,8 @@ def main():
             current_agent = agents_to_play[playback_index]
             audio_file = st.session_state.agent_audio_files.get(current_agent)
             
-            # Update current playing agent and re-render circles
             st.session_state.current_playing_agent = current_agent
-            
-            # Show speaking indicator
+
             agent_info = get_agent_display_info().get(current_agent, {"icon": "🤖", "label": format_agent_name(current_agent)})
             st.markdown(f"""
             <div class="speaking-indicator">
@@ -1062,54 +996,43 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            # Play the audio for current agent with automatic progression
+ 
             if audio_file and os.path.exists(audio_file):
                 try:
                     with open(audio_file, "rb") as f:
                         audio_data = f.read()
                     
-                    # Display audio with autoplay
+   
                     st.audio(audio_data, format="audio/wav", autoplay=True)
                     
-                    # Track when audio started - use a unique key per agent to handle page navigation
                     audio_start_key = f"audio_start_{current_agent}"
                     if audio_start_key not in st.session_state:
                         st.session_state[audio_start_key] = time.time()
                     
-                    # Get estimated duration for this agent
                     duration = st.session_state.audio_durations.get(current_agent, 10)
-                    
-                    # Check if enough time has passed to advance to next agent
                     elapsed = time.time() - st.session_state[audio_start_key]
                     
                     if elapsed >= duration:
-                        # Advance to next agent - clean up the start time key
                         del st.session_state[audio_start_key]
                         st.session_state.playback_index += 1
                         st.rerun()
                     else:
-                        # Show progress
                         remaining = int(duration - elapsed)
                         st.caption(f"⏱️ Next agent in ~{remaining} seconds...")
-                        
-                        # Auto-refresh interval based on remaining time (min 1 second, max 3 seconds)
                         refresh_interval = min(3000, max(1000, remaining * 500))
                         st_autorefresh(interval=refresh_interval, limit=None, key=f"audio_refresh_{playback_index}")
                     
                 except IOError as e:
                     st.error(f"Error reading audio file: {e}")
         else:
-            # All agents have played
             st.success("✅ Voice output complete!")
             st.session_state.voice_playing = False
             st.session_state.current_playing_agent = None
             st.session_state.playback_index = 0
             st.session_state.voice_playback_complete = True
     elif st.session_state.get('voice_playback_complete', False):
-        # Voice playback already completed
         st.success("✅ Voice output complete!")
     
-    # Footer
     st.markdown("""
     <div class="footer">
         <p>Built with ❤️ by Shreya Kashikar</p>

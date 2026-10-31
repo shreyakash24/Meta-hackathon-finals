@@ -179,14 +179,11 @@ def generate_individual_agent_audio(agent_messages: list, output_dir: str = ".")
             if not content or not content.strip():
                 continue
                 
-            # Get the voice for this agent
             voice_id = AGENT_VOICES.get(agent_name, AGENT_VOICES["default"])
             
-            # Add agent introduction
             intro_text = f"{format_agent_name(agent_name)} speaking: "
             full_text = intro_text + content
             
-            # Create output file path for this agent
             output_file = os.path.join(output_dir, f"{agent_name}_audio.wav")
             
             print(f"Generating voice for {agent_name} using voice {voice_id}...")
@@ -230,7 +227,6 @@ def transcribe_audio(audio_data: bytes, voice_id: str = None) -> Tuple[Optional[
         tuple: (transcribed_text, error_message) - transcribed_text is the text if successful,
                error_message contains details if transcription fails. One of them will be None.
     """
-    # Primary method: Use SpeechRecognition with Google's free API
     tmp_path = None
     google_error = None
     
@@ -251,7 +247,6 @@ def transcribe_audio(audio_data: bytes, voice_id: str = None) -> Tuple[Optional[
             with sr.AudioFile(tmp_path) as source:
                 audio = recognizer.record(source)
             
-            # Use Google's free speech recognition API
             transcribed_text = recognizer.recognize_google(audio)
             print(f"Transcription successful: {transcribed_text}")
             return (transcribed_text, None)
@@ -263,27 +258,22 @@ def transcribe_audio(audio_data: bytes, voice_id: str = None) -> Tuple[Optional[
             google_error = f"Could not connect to speech recognition service. Please check your internet connection."
             print(f"Google Speech Recognition request error: {e}")
         finally:
-            # Clean up temporary file
             if tmp_path and os.path.exists(tmp_path):
                 os.remove(tmp_path)
                 
     except ImportError:
         google_error = "SpeechRecognition library not installed."
         print(f"ImportError: {google_error}")
-        # Clean up temp file if it was created
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
     except Exception as e:
         google_error = f"Speech recognition error: {str(e)}"
         print(f"Google Speech Recognition failed: {e}")
-        # Clean up temp file if it was created
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
     
-    # Fallback method: Use Murf AI's voice_changer with return_transcription
     client = get_murf_client()
     if not client:
-        # No Murf API key, return the Google error
         if google_error:
             return (None, google_error)
         return (None, "Speech recognition failed and no fallback API key is configured.")
@@ -298,7 +288,6 @@ def transcribe_audio(audio_data: bytes, voice_id: str = None) -> Tuple[Optional[
             multi_native_locale=DEFAULT_LOCALE,
         )
         
-        # Extract transcription from response
         if hasattr(response, 'transcription') and response.transcription:
             return (response.transcription, None)
         else:
