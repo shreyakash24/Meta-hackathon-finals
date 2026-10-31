@@ -1052,7 +1052,7 @@ def main():
     st.markdown("""
     <div class="footer">
         <p>Built with ❤️ by Shreya Kashikar</p>
-        <p><small>© 2025 Sensei4Stocks | All Rights Reserved</small></p>
+        <p><small>© Sensei4Stocks | All Rights Reserved</small></p>
     </div>
     """, unsafe_allow_html=True)
 
