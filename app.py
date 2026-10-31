@@ -23,6 +23,28 @@ from voice_generator import (
 from streamlit_autorefresh import st_autorefresh
 load_dotenv()
 
+
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "nvidia").lower()
+
+
+def get_chat_model():
+    """Build the chat model for the configured LLM_PROVIDER."""
+    if LLM_PROVIDER == "meta":
+        return init_chat_model(
+            model=os.getenv("META_MODEL", "muse-spark-1.3"),
+            api_key=os.getenv("MODEL_API_KEY"),
+            model_provider="openai",
+            base_url="https://api.meta.ai/v1",
+            max_tokens=4000
+        )
+    return init_chat_model(
+        model="meta/llama-3.3-70b-instruct",
+        api_key=os.getenv("NVIDIA_API_KEY"),
+        model_provider="openai",
+        base_url="https://integrate.api.nvidia.com/v1",
+        max_tokens=1000
+    )
+
 # Content length thresholds for filtering agent messages
 # MIN_STREAMING_CONTENT_LENGTH: Minimum length to capture during streaming (filters out tool calls)
 # Shorter threshold (50) used during streaming to capture intermediate analysis updates
@@ -444,13 +466,7 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
             }
         )
         tools = await client.get_tools()
-        model = init_chat_model(
-            model="meta/llama-3.3-70b-instruct",
-            api_key=os.getenv("NVIDIA_API_KEY"),
-            model_provider="openai",
-            base_url="https://integrate.api.nvidia.com/v1",
-            max_tokens=1000
-        )
+        model = get_chat_model()
         
         status_text.text("🤖 Creating specialized agents...")
         
@@ -597,13 +613,7 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
             return messages[-keep_last:]
         
         supervisor = create_supervisor(
-            model=init_chat_model(
-                model="meta/llama-3.3-70b-instruct",
-                api_key=os.getenv("NVIDIA_API_KEY"),
-                model_provider="openai",
-                base_url="https://integrate.api.nvidia.com/v1",
-                max_tokens=1000
-            ),
+            model=get_chat_model(),
             agents=[stock_finder_agent, market_data_agent, news_analyst_agent, price_recommender_agent],
             prompt=(
                 "You are the Supervisor coordinating a stock analysis workflow with four expert agents.\n\n"
@@ -908,7 +918,11 @@ def main():
         reset_voice_state()
         analysis_query = st.session_state.query_text
         
-        if not os.getenv("NVIDIA_API_KEY"):
+        if LLM_PROVIDER == "meta":
+            if not os.getenv("MODEL_API_KEY"):
+                st.error("❌ MODEL_API_KEY (Meta Model API key) is required when LLM_PROVIDER=meta. Please set it in your environment variables.")
+                return
+        elif not os.getenv("NVIDIA_API_KEY"):
             st.error("❌ NVIDIA_API_KEY is required. Please set it in your environment variables.")
             return
         

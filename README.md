@@ -76,7 +76,7 @@ A **Supervisor agent** orchestrates the workflow between these agents using Lang
    Create a `.env` file in the project root:
    ```env
    # Required
-   GROQ_API_KEY=your_groq_api_key
+   NVIDIA_API_KEY=your_nvidia_api_key
    BRIGHT_DATA_API_TOKEN=your_bright_data_token
    
    # Optional - for voice output
@@ -102,7 +102,7 @@ A **Supervisor agent** orchestrates the workflow between these agents using Lang
 
 | Variable | Description |
 |----------|-------------|
-| `GROQ_API_KEY` | Your GROQ API key for LLM access |
+| `NVIDIA_API_KEY` | Your NVIDIA API key for LLM access |
 | `BRIGHT_DATA_API_TOKEN` | Bright Data API token for web scraping |
 
 ### Optional - Bright Data Configuration
