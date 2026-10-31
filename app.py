@@ -445,9 +445,10 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
         )
         tools = await client.get_tools()
         model = init_chat_model(
-            model="qwen/qwen3-32b",
-            api_key=os.getenv("GROQ_API_KEY"),
-            model_provider="groq",
+            model="meta/llama-3.3-70b-instruct",
+            api_key=os.getenv("NVIDIA_API_KEY"),
+            model_provider="openai",
+            base_url="https://integrate.api.nvidia.com/v1",
             max_tokens=1000
         )
         
@@ -597,9 +598,10 @@ async def run_stock_analysis(query, progress_container, status_text, result_cont
         
         supervisor = create_supervisor(
             model=init_chat_model(
-                model="qwen/qwen3-32b",
-                api_key=os.getenv("GROQ_API_KEY"),
-                model_provider="groq",
+                model="meta/llama-3.3-70b-instruct",
+                api_key=os.getenv("NVIDIA_API_KEY"),
+                model_provider="openai",
+                base_url="https://integrate.api.nvidia.com/v1",
                 max_tokens=1000
             ),
             agents=[stock_finder_agent, market_data_agent, news_analyst_agent, price_recommender_agent],
@@ -906,8 +908,8 @@ def main():
         reset_voice_state()
         analysis_query = st.session_state.query_text
         
-        if not os.getenv("GROQ_API_KEY"):
-            st.error("❌ GROQ_API_KEY is required. Please set it in your environment variables.")
+        if not os.getenv("NVIDIA_API_KEY"):
+            st.error("❌ NVIDIA_API_KEY is required. Please set it in your environment variables.")
             return
         
         if not os.getenv("BRIGHT_DATA_API_TOKEN"):
