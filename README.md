@@ -50,7 +50,7 @@ A **Supervisor agent** orchestrates the workflow between these agents using Lang
 ## ✨ Features
 
 - **Professional Streamlit UI** - Clean, modern interface for stock analysis
-- **Multi-Agent AI System** - Four specialized agents working together
+- **Multi-Agent AI System** - Four specialized agents working together implemented using langgraph 
 - **🔌 MCP Tool Integration** - Agents fetch live NSE prices, data and news through the Bright Data MCP server (via langchain-mcp-adapters)
 - **Real-time Progress** - Watch agents work in real-time
 - **Quick Analysis Options** - Pre-built queries for common use cases
